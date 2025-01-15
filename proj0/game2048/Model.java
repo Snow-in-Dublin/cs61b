@@ -30,6 +30,7 @@ public class Model extends Observable {
     public Model(int size) {
         board = new Board(size);
         score = maxScore = 0;
+
         gameOver = false;
     }
 
@@ -111,9 +112,60 @@ public class Model extends Observable {
         changed = false;
 
         // TODO: Modify this.board (and perhaps this.score) to account
+
+        int size = board.size();
+
+        if(side != Side.NORTH)
+            board.setViewingPerspective(side);
+
+        // 对于每一列，先找到能向上移动的最大位置（找空格数）
+        for(int col = 0; col < size; col ++) {
+            for (int row = size - 2; row >= 0; row--) {
+                int nulltile = 0;
+                Tile t = board.tile(col, row);
+                if(t != null) {
+                    for(int row_before = row + 1; row_before < size; row_before ++){
+                        if(tile(col, row_before) == null)
+                            nulltile ++;
+                    }
+                    board.move(col, row + nulltile, t);
+                    changed = true;
+                }
+            }
+        }
+        for(int col = 0; col < size; col ++){
+            for(int row = size - 2; row >= 0; row --){
+                Tile t1 = board.tile(col, row);
+                if(t1 != null){
+                    Tile t2 = board.tile(col, row + 1);
+                    if(t2 != null && t1.value() == t2.value()){
+                        board.move(col, row + 1, t1);
+                        changed = true;
+                        score += 2 * t2.value();
+                    }
+                }
+            }
+        }
+        for(int col = 0; col < size; col ++) {
+            for (int row = size - 2; row >= 0; row--) {
+                int nulltile = 0;
+                Tile t = board.tile(col, row);
+                if(t != null) {
+                    for(int row_before = row + 1; row_before < size; row_before ++){
+                        if(tile(col, row_before) == null)
+                            nulltile ++;
+                    }
+                    board.move(col, row + nulltile, t);
+                    changed = true;
+                }
+            }
+        }
+
+        if(side != Side.NORTH)
+            board.setViewingPerspective(Side.NORTH);
+
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
-
         checkGameOver();
         if (changed) {
             setChanged();
@@ -137,7 +189,13 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (b.tile(i, j) == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -147,7 +205,14 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                Tile t = b.tile(i, j);
+                if (t != null && t.value() == MAX_PIECE) {
+                    return true; // 找到目标值，返回 true
+                }
+            }
+        }
         return false;
     }
 
@@ -159,6 +224,44 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (b.tile(i, j) == null) {
+                    return true;
+                }
+            }
+        }
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                Tile current = b.tile(i, j);
+                if (j < 3) {
+                    Tile right = b.tile(i, j + 1);
+                    if (right != null && current.value() == right.value()) {
+                        return true;
+                    }
+                }
+                if (i < 3) {
+                    Tile bottom = b.tile(i + 1, j);
+                    if (bottom != null && current.value() == bottom.value()) {
+                        return true;
+                    }
+                }
+                if (j > 0) {
+                    Tile left = b.tile(i, j - 1);
+                    if (left != null && current.value() == left.value()) {
+                        return true;
+                    }
+                }
+                if (i > 0) {
+                    Tile top = b.tile(i - 1, j);
+                    if (top != null && current.value() == top.value()) {
+                        return true;
+                    }
+                }
+            }
+        }
+
         return false;
     }
 
